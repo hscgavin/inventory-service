@@ -2,10 +2,12 @@ package main
 
 import (
 	"encoding/json"
+	"io/ioutil"
 	"log"
 	"net/http"
 )
 
+// comment
 type Product struct {
 	ProductID      int    `json:"productId"`
 	Manufacturer   string `json:"manufacturer"`
@@ -49,16 +51,46 @@ func barHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("called"))
 }
 
+func getNextID() int {
+	highestID := -1
+	for _, prod := range productList {
+		if highestID < prod.ProductID {
+			highestID = prod.ProductID
+		}
+	}
+	return highestID + 1
+}
+
 func productsHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
-		productsJson, err := json.Marshal(productList)
+		productsJSON, err := json.Marshal(productList)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 		w.Header().Set("Content-Type", "application/json")
-		w.Write(productsJson)
+		w.Write(productsJSON)
+	case http.MethodPost:
+		var newProduct Product
+		bodyBytes, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		err = json.Unmarshal(bodyBytes, &newProduct)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		if newProduct.ProductID != 0 {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		newProduct.ProductID = getNextID()
+		productList = append(productList, newProduct)
+		w.WriteHeader(http.StatusCreated)
+		return
 	}
 }
 
