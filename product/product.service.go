@@ -7,15 +7,18 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+
+	"github.com/hscgavin/inventory-service/cors"
 )
 
 const productsBasePath = "products"
 
+// SetupRoutes :
 func SetupRoutes(apiBasePath string) {
 	handleProducts := http.HandlerFunc(productsHandler)
 	handleProduct := http.HandlerFunc(productHandler)
-	http.Handle(fmt.Sprintf("%s/%s", apiBasePath, productsBasePath), handleProducts)
-	http.Handle(fmt.Sprintf("%s/%s", apiBasePath, productsBasePath), handleProduct)
+	http.Handle(fmt.Sprintf("%s/%s", apiBasePath, productsBasePath), cors.Middleware(handleProducts))
+	http.Handle(fmt.Sprintf("%s/%s/", apiBasePath, productsBasePath), cors.Middleware(handleProduct))
 }
 
 func productsHandler(w http.ResponseWriter, r *http.Request) {
@@ -51,6 +54,9 @@ func productsHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		w.WriteHeader(http.StatusCreated)
+		return
+
+	case http.MethodOptions:
 		return
 	}
 }
@@ -99,6 +105,11 @@ func productHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		w.WriteHeader(http.StatusOK)
 		return
+	case http.MethodDelete:
+		removeProduct(productID)
+	case http.MethodOptions:
+		return
+
 	default:
 		w.WriteHeader(http.StatusMethodNotAllowed)
 	}

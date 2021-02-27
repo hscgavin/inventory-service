@@ -1,6 +1,6 @@
 package product
 
-// Product
+// Product :
 type Product struct {
 	ProductID      int    `json:"productId"`
 	Manufacturer   string `json:"manufacturer"`
