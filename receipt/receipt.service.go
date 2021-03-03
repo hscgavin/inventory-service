@@ -70,13 +70,13 @@ func handleReceipts(w http.ResponseWriter, r *http.Request) {
 		}
 	case http.MethodPost:
 		r.ParseMultipartForm(5 << 20) // 5Mb
-		file, handler, err := r.FormFile("receipt")
+		file, header, err := r.FormFile("receipt")
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
 		defer file.Close()
-		f, err := os.OpenFile(filepath.Join(ReceiptDirectory, handler.Filename), os.O_WRONLY|os.O_CREATE, 0666)
+		f, err := os.OpenFile(filepath.Join(ReceiptDirectory, header.Filename), os.O_WRONLY|os.O_CREATE, 0666)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			return
